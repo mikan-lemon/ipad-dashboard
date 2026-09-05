@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>デイリーダッシュボード</title>
+<style>
+  :root{
+    --bg:#f4f3ee; --card:#ffffff; --border:#e3e1d8;
+    --text:#26251f; --text-2:#6b6a60; --text-3:#9a988c;
+    --accent:#3c3489; --accent-bg:#eeedfe;
+    --teal:#0f6e56; --teal-bg:#e1f5ee;
+    --coral:#993c1d; --coral-bg:#faece7;
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1b1a17; --card:#242320; --border:#3a3830;
+      --text:#f1efe8; --text-2:#b4b2a9; --text-3:#807e75;
+      --accent:#cecbf6; --accent-bg:#3c3489;
+      --teal:#9fe1cb; --teal-bg:#085041;
+      --coral:#f0997b; --coral-bg:#712b13;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:32px; min-height:100vh; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+  }
+  .wrap{max-width:1000px; margin:0 auto;}
+  .top{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px; flex-wrap:wrap; gap:16px;}
+  .date-block .day{font-size:15px; color:var(--text-2); margin:0 0 4px;}
+  .date-block .date{font-size:32px; font-weight:600; margin:0;}
+  .weather{display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 22px;}
+  .weather .temp{font-size:28px; font-weight:600;}
+  .weather .desc{font-size:13px; color:var(--text-2);}
+  .weather .icon{font-size:30px;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .grid .card.wide{grid-column:1 / -1;}
+  @media (max-width:720px){.grid{grid-template-columns:1fr;} .grid .card.wide{grid-column:auto;}}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px;}
+  .card h2{font-size:16px; font-weight:600; margin:0 0 14px; display:flex; align-items:center; gap:8px;}
+  .sched-item{display:flex; gap:14px; padding:10px 0; border-top:1px solid var(--border);}
+  .sched-item:first-child{border-top:none;}
+  .sched-time{width:56px; flex-shrink:0; font-size:13px; color:var(--text-2); padding-top:2px;}
+  .sched-title{font-size:15px;}
+  .sched-sub{font-size:12px; color:var(--text-3); margin-top:2px;}
+  .news-cols{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:560px){.news-cols{grid-template-columns:1fr;}}
+  .news-section .tag{display:inline-block; font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px; margin-bottom:10px;}
+  .tag.general{background:var(--accent-bg); color:var(--accent);}
+  .tag.field{background:var(--teal-bg); color:var(--teal);}
+  .news-item{font-size:13.5px; line-height:1.5; padding:8px 0; border-top:1px solid var(--border);}
+  .news-item:first-of-type{border-top:none;}
+  .news-src{font-size:11px; color:var(--text-3); margin-top:2px;}
+  .placeholder-note{font-size:11px; color:var(--text-3); margin-top:14px; text-align:center;}
+
+  .todo-form{display:flex; gap:8px; margin-bottom:14px;}
+  .todo-form input[type="text"]{
+    flex:1; padding:9px 12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-size:14px;
+  }
+  .todo-form input[type="text"]:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .todo-form button{
+    padding:9px 16px; border-radius:10px; border:1px solid var(--border);
+    background:var(--accent-bg); color:var(--accent); font-size:14px; font-weight:600; cursor:pointer;
+  }
+  .todo-item{display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-top:1px solid var(--border);}
+  .todo-item:first-child{border-top:none;}
+  .todo-item input[type="checkbox"]{margin-top:3px; width:17px; height:17px; flex-shrink:0; cursor:pointer;}
+  .todo-text{flex:1; font-size:14.5px; word-break:break-word; cursor:pointer;}
+  .todo-item.done .todo-text{color:var(--text-3); text-decoration:line-through;}
+  .todo-del{
+    border:none; background:none; color:var(--text-3); font-size:13px; cursor:pointer; padding:2px 6px;
+    flex-shrink:0;
+  }
+  .todo-del:hover{color:var(--coral);}
+  .todo-empty{font-size:13px; color:var(--text-3); padding:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="date-block">
+      <p class="day" id="dayLabel">-</p>
+      <p class="date" id="dateLabel">-</p>
+    </div>
+    <div class="weather" id="weatherBox">
+      <span class="icon">⛅</span>
+      <div>
+        <div class="temp" id="temp">--°</div>
+        <div class="desc" id="weatherDesc">天気を取得中…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>今日の予定</h2>
+      <div id="scheduleList"></div>
+      <p class="placeholder-note">※ ダミーデータです。後でカレンダー連携予定</p>
+    </div>
+
+    <div class="card">
+      <h2>Todo</h2>
+      <form class="todo-form" id="todoForm">
+        <input type="text" id="todoInput" placeholder="やることを入力" autocomplete="off">
+        <button type="submit">追加</button>
+      </form>
+      <div id="todoList"></div>
+    </div>
+
+    <div class="card wide">
+      <h2>時事情報</h2>
+      <div class="news-cols">
+        <div class="news-section">
+          <span class="tag general">ニュース全般</span>
+          <div id="newsGeneral"></div>
+        </div>
+        <div class="news-section">
+          <span class="tag field">教育・情報分野</span>
+          <div id="newsField"></div>
+        </div>
+      </div>
+      <p class="placeholder-note">※ ダミーデータです。後でニュースAPI連携予定</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// --- 日付 ---
+const now = new Date();
+const dayNames = ["日","月","火","水","木","金","土"];
+document.getElementById("dayLabel").textContent = dayNames[now.getDay()] + "曜日";
+document.getElementById("dateLabel").textContent =
+  `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+
+// --- 天気(現在地を自動取得, Open-Meteo API) ---
+const weatherCodeMap = {
+  0:["晴れ","☀️"],1:["晴れ時々曇り","🌤️"],2:["曇り","⛅"],3:["曇り","☁️"],
+  45:["霧","🌫️"],48:["霧","🌫️"],
+  51:["小雨","🌦️"],53:["雨","🌧️"],55:["強い雨","🌧️"],
+  61:["雨","🌧️"],63:["雨","🌧️"],65:["大雨","🌧️"],
+  71:["雪","🌨️"],73:["雪","🌨️"],75:["大雪","❄️"],
+  80:["にわか雨","🌦️"],81:["にわか雨","🌦️"],82:["激しいにわか雨","⛈️"],
+  95:["雷雨","⛈️"],96:["雷雨","⛈️"],99:["雷雨","⛈️"]
+};
+
+function setWeather(temp, code){
+  const [desc, icon] = weatherCodeMap[code] || ["-","🌡️"];
+  document.querySelector("#weatherBox .icon").textContent = icon;
+  document.getElementById("temp").textContent = `${Math.round(temp)}°`;
+  document.getElementById("weatherDesc").textContent = desc;
+}
+
+function weatherError(msg){
+  document.getElementById("weatherDesc").textContent = msg;
+}
+
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+      const data = await res.json();
+      setWeather(data.current_weather.temperature, data.current_weather.weathercode);
+    } catch (e) {
+      weatherError("天気の取得に失敗しました");
+    }
+  }, () => {
+    weatherError("位置情報が許可されていません");
+  });
+} else {
+  weatherError("位置情報に対応していません");
+}
+
+// --- 予定(ダミーデータ) ---
+const schedule = [
+  { time:"09:00", title:"チームミーティング", sub:"オンライン" },
+  { time:"11:30", title:"資料作成", sub:"" },
+  { time:"13:00", title:"ランチ", sub:"" },
+  { time:"15:00", title:"打ち合わせ", sub:"会議室A" },
+  { time:"19:00", title:"ジム", sub:"" },
+];
+document.getElementById("scheduleList").innerHTML = schedule.map(s => `
+  <div class="sched-item">
+    <div class="sched-time">${s.time}</div>
+    <div>
+      <div class="sched-title">${s.title}</div>
+      ${s.sub ? `<div class="sched-sub">${s.sub}</div>` : ""}
+    </div>
+  </div>
+`).join("");
+
+// --- Todoリスト(ブラウザ内に保存) ---
+const TODO_KEY = "dashboard_todos";
+let todos = [];
+try {
+  todos = JSON.parse(localStorage.getItem(TODO_KEY)) || [];
+} catch (e) {
+  todos = [];
+}
+
+function saveTodos(){
+  localStorage.setItem(TODO_KEY, JSON.stringify(todos));
+}
+
+function renderTodos(){
+  const list = document.getElementById("todoList");
+  if (todos.length === 0){
+    list.innerHTML = `<p class="todo-empty">Todoはありません</p>`;
+    return;
+  }
+  list.innerHTML = todos.map((t, i) => `
+    <div class="todo-item ${t.done ? "done" : ""}">
+      <input type="checkbox" data-idx="${i}" ${t.done ? "checked" : ""}>
+      <span class="todo-text" data-idx="${i}">${t.text}</span>
+      <button class="todo-del" data-idx="${i}">削除</button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener("change", (e) => {
+      const idx = Number(e.target.dataset.idx);
+      todos[idx].done = e.target.checked;
+      saveTodos();
+      renderTodos();
+    });
+  });
+  list.querySelectorAll(".todo-text").forEach(el => {
+    el.addEventListener("click", (e) => {
+      const idx = Number(e.target.dataset.idx);
+      todos[idx].done = !todos[idx].done;
+      saveTodos();
+      renderTodos();
+    });
+  });
+  list.querySelectorAll(".todo-del").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const idx = Number(e.target.dataset.idx);
+      todos.splice(idx, 1);
+      saveTodos();
+      renderTodos();
+    });
+  });
+}
+
+document.getElementById("todoForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("todoInput");
+  const text = input.value.trim();
+  if (!text) return;
+  todos.push({ text, done:false });
+  input.value = "";
+  saveTodos();
+  renderTodos();
+});
+
+renderTodos();
+
+// --- ニュース(ダミーデータ) ---
+const newsGeneral = [
+  { title:"経済指標発表、市場は小幅上昇", src:"サンプルニュース" },
+  { title:"新しい国際会議が来週開催予定", src:"サンプルニュース" },
+  { title:"気候変動対策の新方針を発表", src:"サンプルニュース" },
+];
+const newsField = [
+  { title:"文部科学省、新学習指導要領の方針案を公表", src:"教育ニュース" },
+  { title:"生成AIの教育現場活用ガイドライン策定へ", src:"情報系ニュース" },
+  { title:"大学入試改革に関する議論が本格化", src:"教育ニュース" },
+];
+
+function renderNews(id, items){
+  document.getElementById(id).innerHTML = items.map(n => `
+    <div class="news-item">
+      ${n.title}
+      <div class="news-src">${n.src}</div>
+    </div>
+  `).join("");
+}
+renderNews("newsGeneral", newsGeneral);
+renderNews("newsField", newsField);
+</script>
+</body>
+</html>
