@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ぴよログ ダッシュボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --card: #FFFFFF;
+    --ink: #21261F;
+    --ink-soft: #8B9088;
+    --line: #EBE8E1;
+
+    --pee-accent: #2E9E82;
+    --pee-tint: #E9F5F0;
+    --pee-tint-strong: #DCEFE8;
+
+    --milk-accent: #BE6234;
+    --milk-tint: #FBEDE3;
+    --milk-tint-strong: #F6DDCB;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans JP", sans-serif;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .numeral {
+    font-family: "M PLUS Rounded 1c", "Noto Sans JP", sans-serif;
+  }
+
+  .app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 40px 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .brand .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--pee-accent);
+    display: inline-block;
+  }
+
+  .clock {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+
+  .clock .time {
+    font-family: "M PLUS Rounded 1c", sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .columns {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    min-height: 0;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+  }
+
+  .column-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 19px;
+    font-weight: 700;
+  }
+
+  .column-title .bar {
+    width: 4px;
+    height: 18px;
+    border-radius: 2px;
+  }
+
+  .col-pee .bar { background: var(--pee-accent); }
+  .col-milk .bar { background: var(--milk-accent); }
+
+  .card {
+    background: var(--card);
+    border-radius: 22px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 2px rgba(33, 38, 31, 0.04), 0 8px 20px rgba(33, 38, 31, 0.05);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .card-head .label {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .card-head .ago {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .pill {
+    border-radius: 16px;
+    padding: 14px 16px;
+    background: #F5F4F0;
+  }
+
+  .col-pee .pill.next { background: var(--pee-tint); }
+  .col-milk .pill.next { background: var(--milk-tint); }
+
+  .pill .pill-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+
+  .pill .pill-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .col-pee .pill.next .pill-value { color: var(--pee-accent); }
+  .col-milk .pill.next .pill-value { color: var(--milk-accent); }
+
+  .pill .pill-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  .row-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    margin-top: 14px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .row-stat .stat-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .interval-setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    margin-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .interval-setting .setting-text .t1 {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .interval-setting .setting-text .t2 {
+    font-size: 11px;
+    color: var(--ink-soft);
+    opacity: 0.8;
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .stepper button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: #FBFAF8;
+    font-size: 18px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stepper button:active { background: var(--line); }
+
+  .stepper .val {
+    font-weight: 700;
+    font-size: 15px;
+    min-width: 78px;
+    text-align: center;
+  }
+
+  .mini-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+  }
+
+  .mini-row .label {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .mini-row .ago {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .big-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 20px 2px 4px;
+  }
+
+  .big-amount .num {
+    font-size: 58px;
+    font-weight: 800;
+    color: var(--milk-accent);
+    line-height: 1;
+  }
+
+  .big-amount .unit {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  .dilution {
+    border-radius: 16px;
+    background: var(--milk-tint);
+    padding: 4px 16px 6px;
+    margin-top: 16px;
+  }
+
+  .dilution .dtitle {
+    font-size: 13px;
+    color: var(--milk-accent);
+    font-weight: 700;
+    padding: 10px 0 8px;
+  }
+
+  .dilution .drow {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-top: 1px solid var(--milk-tint-strong);
+    font-size: 13px;
+    color: #6B4126;
+  }
+
+  .dilution .drow .dval {
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .empty-hint {
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-align: center;
+    padding: 30px 10px;
+  }
+
+  .footer-link {
+    position: fixed;
+    bottom: 10px;
+    right: 16px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    opacity: 0.5;
+    background: none;
+    border: none;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand"><span class="dot"></span>ぴよログ ダッシュボード</div>
+      <div class="clock">
+        <span id="date-label"></span>
+        <span class="time numeral" id="time-label"></span>
+      </div>
+    </header>
+
+    <div class="columns">
+      <section class="column col-pee">
+        <div class="column-title"><span class="bar"></span>トイレ</div>
+        <div class="card" id="pee-card"><div class="empty-hint">読み込み中...</div></div>
+        <div class="card" style="padding:0;">
+          <div class="mini-row" id="poop-row">
+            <span class="label">うんち</span>
+            <span class="ago numeral">--</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="column col-milk">
+        <div class="column-title"><span class="bar"></span>ミルク</div>
+        <div class="card" id="milk-card"><div class="empty-hint">読み込み中...</div></div>
+      </section>
+    </div>
+  </div>
+
+  <button class="footer-link" onclick="PiyologDashboard.resetFeedUrl()">フィードURLを再設定</button>
+
+<script>
+(function () {
+  const STORAGE_URL_KEY = 'piyolog_feed_url';
+  const STORAGE_INTERVAL_KEY = 'piyolog_intervals'; // { Pee: 150, Formula: 150 } 分単位
+  const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+  const DEFAULT_INTERVAL_MIN = { Pee: 150, Formula: 150 };
+  const STEP_MIN = 10;
+  const MIN_INTERVAL = 30;
+  const MAX_INTERVAL = 360;
+
+  let feedCache = null;
+
+  function getFeedUrl() {
+    let url = localStorage.getItem(STORAGE_URL_KEY);
+    if (!url) {
+      url = window.prompt('ぴよログのデータフィードURLを入力してください\n(このiPadのブラウザ内にのみ保存されます)');
+      if (url && url.trim()) {
+        url = url.trim();
+        localStorage.setItem(STORAGE_URL_KEY, url);
+      } else {
+        url = null;
+      }
+    }
+    return url;
+  }
+
+  function loadIntervals() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORAGE_INTERVAL_KEY) || '{}');
+      return { ...DEFAULT_INTERVAL_MIN, ...raw };
+    } catch (_) {
+      return { ...DEFAULT_INTERVAL_MIN };
+    }
+  }
+
+  function saveIntervals(obj) {
+    localStorage.setItem(STORAGE_INTERVAL_KEY, JSON.stringify(obj));
+  }
+
+  function formatClockTime(d) {
+    return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDuration(minutesTotal) {
+    const sign = minutesTotal < 0 ? -1 : 1;
+    const m = Math.round(Math.abs(minutesTotal));
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    let text = h > 0 ? `${h}時間${mm}分` : `${mm}分`;
+    return sign < 0 ? `${text}超過` : text;
+  }
+
+  function minutesAgo(isoString, now) {
+    return (now - new Date(isoString)) / 60000;
+  }
+
+  function averageIntervalMin(sortedRecords) {
+    if (sortedRecords.length < 2) return null;
+    const recent = sortedRecords.slice(-6); // 直近最大6件から間隔平均
+    let total = 0, count = 0;
+    for (let i = 1; i < recent.length; i++) {
+      total += (new Date(recent[i].datetime) - new Date(recent[i - 1].datetime)) / 60000;
+      count++;
+    }
+    return count ? total / count : null;
+  }
+
+  async function fetchFeed() {
+    const url = getFeedUrl();
+    if (!url) return null;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) {
+      if (res.status === 404) localStorage.removeItem(STORAGE_URL_KEY);
+      let code = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.error?.code) code = body.error.code;
+      } catch (_) {}
+      throw new Error(code);
+    }
+    const data = await res.json();
+    if (data.schema_version !== 1) throw new Error(`未対応のschema_version: ${data.schema_version}`);
+    feedCache = data;
+    return data;
+  }
+
+  function byType(data, type) {
+    return data.records
+      .filter((r) => r.type === type)
+      .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+  }
+
+  function renderPee(data, now, intervals) {
+    const el = document.getElementById('pee-card');
+    const recs = byType(data, 'Pee');
+    if (!recs.length) {
+      el.innerHTML = '<div class="empty-hint">記録がありません</div>';
+      return;
+    }
+    const last = recs[recs.length - 1];
+    const avg = averageIntervalMin(recs);
+    const setMin = intervals.Pee;
+    const nextTime = new Date(new Date(last.datetime).getTime() + setMin * 60000);
+    const remainMin = (nextTime - now) / 60000;
+
+    el.innerHTML = `
+      <div class="card-head">
+        <span class="label">おしっこ</span>
+        <span class="ago numeral">${formatDuration(minutesAgo(last.datetime, now))}前</span>
+      </div>
+      <div class="pair">
+        <div class="pill">
+          <div class="pill-label">前回</div>
+          <div class="pill-value numeral">${formatClockTime(new Date(last.datetime))}</div>
+        </div>
+        <div class="pill next">
+          <div class="pill-label">次回の目安</div>
+          <div class="pill-value numeral">${formatClockTime(nextTime)}</div>
+          <div class="pill-sub numeral">${remainMin >= 0 ? 'あと ' + formatDuration(remainMin) : formatDuration(remainMin)}</div>
+        </div>
+      </div>
+      <div class="row-stat">
+        <span>これまでの平均間隔</span>
+        <span class="stat-value numeral">${avg !== null ? formatDuration(avg) : '--'}</span>
+      </div>
+      <div class="interval-setting">
+        <div class="setting-text">
+          <div class="t1">次回までの設定</div>
+          <div class="t2">${STEP_MIN}分単位で変更</div>
+        </div>
+        <div class="stepper">
+          <button type="button" data-action="dec" data-type="Pee">−</button>
+          <span class="val numeral">${formatDuration(setMin)}</span>
+          <button type="button" data-action="inc" data-type="Pee">＋</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPoop(data, now) {
+    const el = document.getElementById('poop-row');
+    const recs = byType(data, 'Poop');
+    if (!recs.length) {
+      el.querySelector('.ago').textContent = '記録なし';
+      return;
+    }
+    const last = recs[recs.length - 1];
+    el.querySelector('.ago').textContent = formatDuration(minutesAgo(last.datetime, now)) + '前';
+  }
+
+  function computeDilution(totalMl, target = 40, boil = 100, room = 25) {
+    const hot = totalMl * (target - room) / (boil - room);
+    const roomWater = totalMl - hot;
+    return { hot: Math.round(hot), roomWater: Math.round(roomWater) };
+  }
+
+  function renderMilk(data, now, intervals) {
+    const el = document.getElementById('milk-card');
+    const recs = byType(data, 'Formula').filter((r) => r.value);
+    if (!recs.length) {
+      el.innerHTML = '<div class="empty-hint">記録がありません</div>';
+      return;
+    }
+    const last = recs[recs.length - 1];
+    const avg = averageIntervalMin(recs);
+    const setMin = intervals.Formula;
+    const nextTime = new Date(new Date(last.datetime).getTime() + setMin * 60000);
+    const remainMin = (nextTime - now) / 60000;
+    const amount = last.value.value;
+    const dil = computeDilution(amount);
+
+    el.innerHTML = `
+      <div class="card-head">
+        <span class="label">最後の記録</span>
+        <span class="ago numeral">${formatDuration(minutesAgo(last.datetime, now))}前</span>
+      </div>
+      <div class="pair">
+        <div class="pill">
+          <div class="pill-label">前回</div>
+          <div class="pill-value numeral">${formatClockTime(new Date(last.datetime))}</div>
+        </div>
+        <div class="pill next">
+          <div class="pill-label">次回の目安</div>
+          <div class="pill-value numeral">${formatClockTime(nextTime)}</div>
+          <div class="pill-sub numeral">${remainMin >= 0 ? 'あと ' + formatDuration(remainMin) : formatDuration(remainMin)}</div>
+        </div>
+      </div>
+      <div class="row-stat">
+        <span>これまでの平均間隔</span>
+        <span class="stat-value numeral">${avg !== null ? formatDuration(avg) : '--'}</span>
+      </div>
+      <div class="interval-setting">
+        <div class="setting-text">
+          <div class="t1">次回までの設定</div>
+          <div class="t2">${STEP_MIN}分単位で変更</div>
+        </div>
+        <div class="stepper">
+          <button type="button" data-action="dec" data-type="Formula">−</button>
+          <span class="val numeral">${formatDuration(setMin)}</span>
+          <button type="button" data-action="inc" data-type="Formula">＋</button>
+        </div>
+      </div>
+      <div class="big-amount">
+        <span class="num numeral">${amount}</span>
+        <span class="unit">ml</span>
+      </div>
+      <div class="dilution">
+        <div class="dtitle">40°Cにする配分</div>
+        <div class="drow"><span>100°Cのお湯</span><span class="dval numeral">${dil.hot} ml</span></div>
+        <div class="drow"><span>常温の水（25°C）</span><span class="dval numeral">${dil.roomWater} ml</span></div>
+      </div>
+    `;
+  }
+
+  function renderClock() {
+    const now = new Date();
+    document.getElementById('date-label').textContent =
+      now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+    document.getElementById('time-label').textContent = formatClockTime(now);
+  }
+
+  async function renderAll() {
+    try {
+      const data = feedCache || (await fetchFeed());
+      if (!data) return;
+      const now = new Date();
+      const intervals = loadIntervals();
+      renderPee(data, now, intervals);
+      renderPoop(data, now);
+      renderMilk(data, now, intervals);
+    } catch (e) {
+      const msg = `<div class="empty-hint">取得エラー: ${e.message}</div>`;
+      document.getElementById('pee-card').innerHTML = msg;
+      document.getElementById('milk-card').innerHTML = msg;
+    }
+  }
+
+  async function refetchAndRender() {
+    try {
+      await fetchFeed();
+    } catch (e) {
+      // renderAll 内でエラー表示するため、ここでは無視して再描画に任せる
+    }
+    renderAll();
+  }
+
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-action]');
+    if (!btn) return;
+    const type = btn.dataset.type;
+    const action = btn.dataset.action;
+    const intervals = loadIntervals();
+    let val = intervals[type] ?? DEFAULT_INTERVAL_MIN[type];
+    val += action === 'inc' ? STEP_MIN : -STEP_MIN;
+    val = Math.min(MAX_INTERVAL, Math.max(MIN_INTERVAL, val));
+    intervals[type] = val;
+    saveIntervals(intervals);
+    renderAll();
+  });
+
+  window.PiyologDashboard = {
+    resetFeedUrl: () => {
+      localStorage.removeItem(STORAGE_URL_KEY);
+      feedCache = null;
+      renderAll();
+    },
+  };
+
+  renderClock();
+  setInterval(renderClock, 1000 * 15);
+  setInterval(renderAll, 1000 * 30); // 「あと○分」表示の更新
+  setInterval(refetchAndRender, REFRESH_INTERVAL_MS);
+  refetchAndRender();
+})();
+</script>
+</body>
+</html>
