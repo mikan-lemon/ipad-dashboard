@@ -165,7 +165,7 @@
   }
 
   .pill .pill-value {
-    font-size: 36px;
+    font-size: 44px;
     font-weight: 700;
     line-height: 1.1;
   }
@@ -515,9 +515,22 @@
     return { hot: Math.round(hot), roomWater: Math.round(roomWater) };
   }
 
+  function formatSeconds(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  // ミルク(Formula)と母乳(BreastFeeding)をまとめて「授乳」として扱う
+  function getFeedingRecords(data) {
+    return data.records
+      .filter((r) => r.type === 'Formula' || r.type === 'BreastFeeding')
+      .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+  }
+
   function renderMilk(data, now, intervals) {
     const el = document.getElementById('milk-card');
-    const recs = byType(data, 'Formula').filter((r) => r.value);
+    const recs = getFeedingRecords(data);
     if (!recs.length) {
       el.innerHTML = '<div class="empty-hint">記録がありません</div>';
       return;
@@ -527,12 +540,44 @@
     const setMin = intervals.Formula;
     const nextTime = new Date(new Date(last.datetime).getTime() + setMin * 60000);
     const remainMin = (nextTime - now) / 60000;
-    const amount = last.value.value;
-    const dil = computeDilution(amount);
+
+    let detailHtml = '';
+    if (last.type === 'Formula' && last.value) {
+      // ミルク: 量を大きく表示 + 調乳の配分計算
+      const amount = last.value.value;
+      const dil = computeDilution(amount);
+      detailHtml = `
+        <div class="big-amount">
+          <span class="num numeral">${amount}</span>
+          <span class="unit">ml</span>
+        </div>
+        <div class="dilution">
+          <div class="dtitle">40°Cにする配分</div>
+          <div class="drow"><span>100°Cのお湯</span><span class="dval numeral">${dil.hot} ml</span></div>
+          <div class="drow"><span>常温の水（25°C）</span><span class="dval numeral">${dil.roomWater} ml</span></div>
+        </div>
+      `;
+    } else if (last.type === 'BreastFeeding') {
+      // 母乳: 左右の時間(と入力されていれば量)を表示。調乳計算は対象外
+      const sideLabel = last.last === 'right' ? '右で終了' : last.last === 'left' ? '左で終了' : '';
+      const timeParts = [];
+      if (last.leftTime) timeParts.push(`左 ${formatSeconds(last.leftTime)}`);
+      if (last.rightTime) timeParts.push(`右 ${formatSeconds(last.rightTime)}`);
+      const amountHtml = last.value
+        ? `<div class="big-amount"><span class="num numeral">${last.value.value}</span><span class="unit">ml</span></div>`
+        : '';
+      detailHtml = `
+        ${amountHtml}
+        <div class="dilution">
+          <div class="dtitle">母乳${sideLabel ? '（' + sideLabel + '）' : ''}</div>
+          ${timeParts.length ? `<div class="drow"><span>授乳時間</span><span class="dval numeral">${timeParts.join(' / ')}</span></div>` : '<div class="drow"><span>時間の記録なし</span><span class="dval numeral">--</span></div>'}
+        </div>
+      `;
+    }
 
     el.innerHTML = `
       <div class="card-head">
-        <span class="label">最後の記録</span>
+        <span class="label">最後の記録${last.type === 'BreastFeeding' ? '（母乳）' : '（ミルク）'}</span>
         <span class="ago numeral">${formatDuration(minutesAgo(last.datetime, now))}前</span>
       </div>
       <div class="pair">
@@ -545,6 +590,10 @@
           <div class="pill-value numeral">${formatClockTime(nextTime)}</div>
           <div class="pill-sub numeral">${remainMin >= 0 ? 'あと ' + formatDuration(remainMin) : formatDuration(remainMin)}</div>
         </div>
+      </div>
+      <div class="row-stat">
+        <span>前回から</span>
+        <span class="stat-value numeral">${formatDuration(minutesAgo(last.datetime, now))}経過</span>
       </div>
       <div class="row-stat">
         <span>これまでの平均間隔</span>
@@ -561,15 +610,7 @@
           <button type="button" data-action="inc" data-type="Formula">＋</button>
         </div>
       </div>
-      <div class="big-amount">
-        <span class="num numeral">${amount}</span>
-        <span class="unit">ml</span>
-      </div>
-      <div class="dilution">
-        <div class="dtitle">40°Cにする配分</div>
-        <div class="drow"><span>100°Cのお湯</span><span class="dval numeral">${dil.hot} ml</span></div>
-        <div class="drow"><span>常温の水（25°C）</span><span class="dval numeral">${dil.roomWater} ml</span></div>
-      </div>
+      ${detailHtml}
     `;
   }
 
