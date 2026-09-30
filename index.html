@@ -196,6 +196,10 @@
     color: var(--ink);
   }
 
+  .row-stat .stat-value.elapsed-value {
+    font-size: 44px;
+  }
+
   .interval-setting {
     display: flex;
     align-items: center;
@@ -593,7 +597,7 @@
       </div>
       <div class="row-stat">
         <span>前回から</span>
-        <span class="stat-value numeral">${formatDuration(minutesAgo(last.datetime, now))}経過</span>
+        <span class="stat-value elapsed-value numeral">${formatDuration(minutesAgo(last.datetime, now))}経過</span>
       </div>
       <div class="row-stat">
         <span>これまでの平均間隔</span>
