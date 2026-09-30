@@ -200,6 +200,10 @@
     font-size: 44px;
   }
 
+  .row-stat .stat-value.elapsed-value.overdue {
+    color: #D64545;
+  }
+
   .interval-setting {
     display: flex;
     align-items: center;
@@ -544,6 +548,8 @@
     const setMin = intervals.Formula;
     const nextTime = new Date(new Date(last.datetime).getTime() + setMin * 60000);
     const remainMin = (nextTime - now) / 60000;
+    const elapsedMin = minutesAgo(last.datetime, now);
+    const elapsedOverdue = elapsedMin >= 180; // 3時間以上経過
 
     let detailHtml = '';
     if (last.type === 'Formula' && last.value) {
@@ -597,7 +603,7 @@
       </div>
       <div class="row-stat">
         <span>前回から</span>
-        <span class="stat-value elapsed-value numeral">${formatDuration(minutesAgo(last.datetime, now))}経過</span>
+        <span class="stat-value elapsed-value numeral${elapsedOverdue ? ' overdue' : ''}">${formatDuration(elapsedMin)}経過</span>
       </div>
       <div class="row-stat">
         <span>これまでの平均間隔</span>
